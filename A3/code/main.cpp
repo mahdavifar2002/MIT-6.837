@@ -148,6 +148,11 @@ namespace
             camera.SetDistance(cameraDistance);
             break;
         }
+        case 'w':
+        {
+            system->toggleWind();
+            break;
+        }
         default:
             cout << "Unhandled key press " << key << "." << endl;        
         }

@@ -76,7 +76,7 @@ vector<Vector3f> ClothSystem::evalF(vector<Vector3f> state)
 
 	float mass = 1 * scale;
 	float drag_coefficient = 0.5;
-	float wind = 0;
+	float wind = 25;
 
 	init_f(state, f);
 	apply_gravity_forces(state, f);

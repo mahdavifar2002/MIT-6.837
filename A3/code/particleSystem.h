@@ -177,6 +177,9 @@ public:
 
 	void apply_wind_forces(vector<Vector3f> state, vector<Vector3f> &f, double wind, float mass)
 	{
+		if (!wind_exist)
+			return;
+
 		double my_rand = (double) rand() / (RAND_MAX) - 0.5;
 		double my_rand2 = (double) rand() / (RAND_MAX) - 0.5;
 
@@ -218,6 +221,8 @@ public:
 
 	bool getSwing(int axis) { return swing[axis]; }
 	void toggleSwing(int axis) { swing[axis] = !swing[axis]; }
+	
+	void toggleWind() { wind_exist = !wind_exist; }
 
 protected:
 
@@ -229,7 +234,8 @@ protected:
 	bool swing[3];
 	bool swing_forwad[3];
 	float swing_length;
-	
+
+	bool wind_exist;
 };
 
 #endif
