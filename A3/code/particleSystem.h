@@ -193,7 +193,8 @@ public:
 		for (size_t ind = 0; ind < fixed_particles.size(); ind++)
 		{
 			int i = fixed_particles[ind];
-			Vector3f p_i = state[2*i];
+			// Vector3f p_i = state[2*i];
+			Vector3f p_mid = state[2*fixed_particles[fixed_particles.size()/2]];
 
 			f[2*i] = Vector3f(0, 0, 0);
 			f[2*i + 1] = Vector3f(0, 0, 0);
@@ -202,10 +203,10 @@ public:
 			for (int axis = 0; axis < 3; axis++)
 				if (swing[axis])
 				{
-					if (swing_forwad[axis] && p_i[axis] > -swing_length)
+					if (swing_forwad[axis] && p_mid[axis] > -swing_length)
 						f[2*i] += -5 * unit[axis];
 					else
-					if (!swing_forwad[axis] && p_i[axis] < swing_length)
+					if (!swing_forwad[axis] && p_mid[axis] < swing_length)
 						f[2*i] += +5 * unit[axis];
 					else {
 						swing_forwad[axis] = !swing_forwad[axis];
