@@ -3,8 +3,24 @@
 
 #include <vector>
 #include <vecmath.h>
+#include <GL/glut.h>
+#include <ctime>
+#include "spring.h"
 
 using namespace std;
+
+inline int get_time()
+{
+	return time(NULL);
+}
+
+class Sphere {
+public:
+	Sphere(Vector3f c, float r):center(c), radius(r){}
+
+	Vector3f center;
+	float radius;
+};
 
 class ParticleSystem
 {
@@ -13,7 +29,7 @@ public:
 	ParticleSystem(int numParticles=0);
 
 	int m_numParticles;
-	
+
 	// for a given state, evaluate derivative f(X,t)
 	virtual vector<Vector3f> evalF(vector<Vector3f> state) = 0;
 	
@@ -24,10 +40,192 @@ public:
 	void setState(const vector<Vector3f>  & newState) { m_vVecState = newState; };
 	
 	virtual void draw() = 0;
+
+	int mod(int i){ return (i + m_numParticles) % m_numParticles; }
+
+	void drawline(int i, int j)
+	{
+		Vector3f p_i = m_vVecState[2*i];//  position of particle i
+		Vector3f p_j = m_vVecState[2*j];//  position of particle j
+		glLineWidth(5.0f);
+		glBegin(GL_LINES);
+		glVertex3d(p_i[0], p_i[1], p_i[2]);
+		glVertex3d(p_j[0], p_j[1], p_j[2]);
+		glEnd();
+		glLineWidth(1.0f);
+	}
+
+	void drawSprings()
+	{
+		for (size_t s = 0; s < springs.size(); s++)
+			drawline(springs[s].i, springs[s].j);
+	}
 	
+	void add_spring(int i, int j, float length, float stiffness)
+	{
+		springs.push_back(Spring(i, j, length, stiffness));
+	}
+
+	void add_fixed_particle(int i)
+	{
+		fixed_particles.push_back(i);
+	}
+
+	void add_obstacle(Vector3f center, float radius)
+	{
+		obstacles.push_back(Sphere(center, radius));
+	}
+
+	void init_f(vector<Vector3f> state, vector<Vector3f> &f)
+	{
+		for (int i = 0; i < m_numParticles; i++)
+		{
+			Vector3f v = state[2*i + 1];
+			f.push_back(v);
+
+			Vector3f a = Vector3f(0, 0, 0);
+			f.push_back(a);
+		}
+	}
+
+	void apply_gravity_forces(vector<Vector3f> state, vector<Vector3f> &f)
+	{
+		Vector3f g = Vector3f(0, -9.8, 0);
+		
+		for (int i = 0; i < m_numParticles; i++)
+			f[2*i + 1] += g;
+	}
+
+
+	void apply_drag_forces(vector<Vector3f> state, vector<Vector3f> &f, float drag_coefficient, float mass)
+	{
+		for (int i = 0; i < m_numParticles; i++)
+		{
+			Vector3f v = state[2*i + 1];
+			f[2*i + 1] += -v * drag_coefficient / mass;
+		}
+	}
+
+	void apply_spring_forces(vector<Vector3f> state, vector<Vector3f> &f, float mass)
+	{
+		for (size_t s = 0; s < springs.size(); s++)
+		{
+			Spring spring = springs[s];
+			Vector3f p_i = state[2 * spring.i];
+			Vector3f p_j = state[2 * spring.j];
+			f[2*spring.i + 1] += spring.getForce(p_i, p_j) / mass;
+			f[2*spring.j + 1] += spring.getForce(p_j, p_i) / mass;
+		}
+	}
+
+	void apply_collision_forces(vector<Vector3f> state, vector<Vector3f> &f, float mass)
+	{
+		for (size_t o = 0; o < obstacles.size(); o++)
+		{
+			Vector3f center = obstacles[o].center;
+			float radius = obstacles[o].radius;
+			
+			for (int i = 0; i < m_numParticles; i++)
+			{
+				Vector3f p_i = state[2*i];
+				Vector3f v_i = state[2*i + 1];
+
+				float k = 40;		// spring model for collision response
+				float c_paral = 40;	// damping factor
+				float c_perp = 5;	// friction effect
+
+				// TODO: make the steps continious
+				for (int step = 0; step < 4; step++)
+				if ((p_i - center).abs() < radius + pow(2,step) * 1e-2)
+				{
+					Vector3f d = center - p_i;
+					Vector3f n = d / d.abs();
+					Vector3f v_paral = Vector3f::dot(v_i, n) * n;
+					Vector3f v_perp = v_i - v_paral;
+					Vector3f F = -k/(pow(2,step))*4*n
+								 -c_paral*v_paral
+								 -c_perp*v_perp/v_perp.abs();
+					f[2*i + 1] += F;
+					break;
+				}
+
+				// // 1
+				// if ((p_i - center + v_i*h).abs() < radius + 1e-2) // && Vector3f::dot(v_i, (p_i - center)) < 0)
+				// {
+				// 	f[2*i] = ((center + (p_i - center)/(p_i - center).abs() * (radius + 1e-1)) - p_i) / h;
+				// 	f[2*i + 1] -= ((center + (p_i - center)/(p_i - center).abs() * (1e-1)) - p_i) / h;
+
+				// 	// best so far
+				// 	f[2*i] += (p_i - center);
+				// 	f[2*i + 1] += (p_i - center);
+
+				// 	if (Vector3f::dot(f[2*i + 1], (p_i - center)) < 0) {
+				// 		f[2*i + 1] = Vector3f(0, 0, 0);
+				// 	}
+				// }
+				// // 2
+				// else if((p_i - center + 2*v_i*h).abs() < radius + 1e-2)
+				// {
+				// 	Vector3f b = p_i - center;
+				// 	Vector3f v_paral = Vector3f::dot(v_i, b) * b / b.absSquared();
+
+				// 	f[2*i + 1] = -v_paral / h;
+				// }
+			}
+		}
+	}
+
+	void apply_wind_forces(vector<Vector3f> state, vector<Vector3f> &f, double wind, float mass)
+	{
+		double my_rand = (double) rand() / (RAND_MAX) - 0.5;
+		double my_rand2 = (double) rand() / (RAND_MAX) - 0.5;
+
+		for (int i = 0; i < m_numParticles; i++)
+		{
+
+			Vector3f wind_force = Vector3f(wind*(my_rand2), 0, wind * i/m_numParticles * (my_rand));
+			f[2*i + 1] += wind_force / mass;
+		}
+	}
+
+	void apply_fixed_particles(vector<Vector3f> state, vector<Vector3f> &f)
+	{
+		for (size_t ind = 0; ind < fixed_particles.size(); ind++)
+		{
+			int i = fixed_particles[ind];
+			Vector3f p_i = state[2*i];
+			f[2*i + 1] = Vector3f(0, 0, 0);
+
+			if (swing)
+			{
+				if (swing_forwad && p_i.z() > -swing_length)
+					f[2*i] = Vector3f(0, 0, -5);
+				else
+				if (!swing_forwad && p_i.z() < swing_length)
+					f[2*i] = Vector3f(0, 0, 5);
+				else {
+					swing_forwad = !swing_forwad;
+					f[2*i] = Vector3f(0, 0, swing_forwad ? -5 : 5);
+				}
+			}
+			else
+				f[2*i] = Vector3f(0, 0, 0);
+		}
+	}
+
+	bool getSwing() { return swing; }
+	void toggleSwing() { swing = !swing; }
+
 protected:
 
 	vector<Vector3f> m_vVecState;
+	vector<Spring> springs;
+	vector<int> fixed_particles;
+	vector<Sphere> obstacles;
+
+	bool swing;
+	bool swing_forwad;
+	float swing_length;
 	
 };
 

@@ -3,6 +3,7 @@
 
 #include <vecmath.h>
 #include <vector>
+#include <GL/glut.h>
 
 #include "particleSystem.h"
 
@@ -10,9 +11,14 @@ class ClothSystem: public ParticleSystem
 {
 ///ADD MORE FUNCTION AND FIELDS HERE
 public:
-	ClothSystem();
+	int numRows, numCols;
+	float scale;
+
+	ClothSystem(int rows, int cols);
+
+	int indexOf(int i, int j);
 	vector<Vector3f> evalF(vector<Vector3f> state);
-	
+	void drawRect(int i, int j);
 	void draw();
 
 private:

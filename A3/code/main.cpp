@@ -12,6 +12,8 @@
 
 #include "TimeStepper.hpp"
 #include "simpleSystem.h"
+#include "pendulumSystem.h"
+#include "ClothSystem.h"
 
 using namespace std;
 
@@ -29,6 +31,8 @@ namespace
     // seed the random number generator with the current time
     srand( time( NULL ) );
     system = new SimpleSystem();
+    system = new PendulumSystem(4);
+    system = new ClothSystem(40, 40);
     timeStepper = new RK4();		
   }
 
@@ -38,6 +42,7 @@ namespace
   void stepSystem()
   {
       ///TODO The stepsize should change according to commandline arguments
+      // TODO: how to decrese h but not look slow motion
     const float h = 0.04f;
     if(timeStepper!=0){
       timeStepper->takeStep(system,h);
@@ -102,6 +107,12 @@ namespace
             Matrix4f eye = Matrix4f::identity();
             camera.SetRotation( eye );
             camera.SetCenter( Vector3f::ZERO );
+            break;
+        }
+        case 's':
+        {
+            system->toggleSwing();
+            printf("swing " + system->getSwing() ? "on" : "off");
             break;
         }
         default:
@@ -283,7 +294,7 @@ int main( int argc, char* argv[] )
     
     camera.SetDimensions( 600, 600 );
 
-    camera.SetDistance( 10 );
+    camera.SetDistance( 20 );
     camera.SetCenter( Vector3f::ZERO );
     
     glutCreateWindow("Assignment 4");
