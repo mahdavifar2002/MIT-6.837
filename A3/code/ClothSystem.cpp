@@ -9,8 +9,11 @@ ClothSystem::ClothSystem(int rows, int cols)
 	numCols = cols;
 	m_numParticles = numRows * numCols;
 
-	swing = true;
-	swing_forwad = true;
+	for (int axis = 0; axis < 3; axis++) {
+		swing[axis] = false;
+		swing_forwad[axis] = true;
+	}
+	swing[2] = true;
 	swing_length = 8;
 
 	// characteristics of types of strings

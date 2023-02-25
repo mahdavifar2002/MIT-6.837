@@ -194,27 +194,29 @@ public:
 		{
 			int i = fixed_particles[ind];
 			Vector3f p_i = state[2*i];
+
+			f[2*i] = Vector3f(0, 0, 0);
 			f[2*i + 1] = Vector3f(0, 0, 0);
 
-			if (swing)
-			{
-				if (swing_forwad && p_i.z() > -swing_length)
-					f[2*i] = Vector3f(0, 0, -5);
-				else
-				if (!swing_forwad && p_i.z() < swing_length)
-					f[2*i] = Vector3f(0, 0, 5);
-				else {
-					swing_forwad = !swing_forwad;
-					f[2*i] = Vector3f(0, 0, swing_forwad ? -5 : 5);
+			Vector3f unit[3] = {Vector3f::RIGHT, Vector3f::UP, -Vector3f::FORWARD};
+			for (int axis = 0; axis < 3; axis++)
+				if (swing[axis])
+				{
+					if (swing_forwad[axis] && p_i[axis] > -swing_length)
+						f[2*i] += -5 * unit[axis];
+					else
+					if (!swing_forwad[axis] && p_i[axis] < swing_length)
+						f[2*i] += +5 * unit[axis];
+					else {
+						swing_forwad[axis] = !swing_forwad[axis];
+						f[2*i] += (swing_forwad[axis] ? -5 : 5) * unit[axis];
+					}
 				}
-			}
-			else
-				f[2*i] = Vector3f(0, 0, 0);
 		}
 	}
 
-	bool getSwing() { return swing; }
-	void toggleSwing() { swing = !swing; }
+	bool getSwing(int axis) { return swing[axis]; }
+	void toggleSwing(int axis) { swing[axis] = !swing[axis]; }
 
 protected:
 
@@ -223,8 +225,8 @@ protected:
 	vector<int> fixed_particles;
 	vector<Sphere> obstacles;
 
-	bool swing;
-	bool swing_forwad;
+	bool swing[3];
+	bool swing_forwad[3];
 	float swing_length;
 	
 };

@@ -109,10 +109,23 @@ namespace
             camera.SetCenter( Vector3f::ZERO );
             break;
         }
-        case 's':
+        case 'x':
         {
-            system->toggleSwing();
-            printf("swing " + system->getSwing() ? "on" : "off");
+            system->toggleSwing(0);
+            printf("swing " + system->getSwing(0) ? "on" : "off");
+            break;
+        }
+        case 'y':
+        {
+            system->toggleSwing(1);
+            printf("swing " + system->getSwing(1) ? "on" : "off");
+            break;
+        }
+        case 's':
+        case 'z':
+        {
+            system->toggleSwing(2);
+            printf("swing " + system->getSwing(2) ? "on" : "off");
             break;
         }
         default:
