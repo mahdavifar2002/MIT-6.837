@@ -23,6 +23,9 @@ namespace
 
     ParticleSystem *system;
     TimeStepper * timeStepper;
+    float cameraDistance = 20;
+    float zoomFactor = 0.9;
+
 
   // initialize your particle systems
   ///TODO: read argv here. set timestepper , step size etc
@@ -126,6 +129,23 @@ namespace
         {
             system->toggleSwing(2);
             printf("swing " + system->getSwing(2) ? "on" : "off");
+            break;
+        }
+        case 'r':
+        {
+            system = new ClothSystem(40, 40);
+            break;
+        }
+        case 'i':
+        {
+            cameraDistance *= zoomFactor;
+            camera.SetDistance(cameraDistance);
+            break;
+        }
+        case 'o':
+        {
+            cameraDistance /= zoomFactor;
+            camera.SetDistance(cameraDistance);
             break;
         }
         default:
