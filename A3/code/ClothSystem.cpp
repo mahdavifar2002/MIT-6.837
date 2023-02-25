@@ -13,7 +13,6 @@ ClothSystem::ClothSystem(int rows, int cols)
 		swing[axis] = false;
 		swing_forwad[axis] = true;
 	}
-	swing[2] = true;
 	swing_length = 8;
 
 	// characteristics of types of strings
@@ -163,13 +162,14 @@ void ClothSystem::draw()
 			{{-0.4,  0.5, 0.2},	{-0.2,  0.6,  0.1},	{0.0,  0.5, 0.3},	{0.4,  0.5, 0.2}}
 	};
 
-	GLfloat ctrlpoints[numRows][numCols][3] = {};
+	Vector3f ctrlpoints[numRows][numCols] = {};
 
 	for (int i = 0; i < numRows; i++)
 		for (int j = 0; j < numCols; j++) {
 			ctrlpoints[i][j][0] = m_vVecState[2*indexOf(i, j)].x();
-			ctrlpoints[i][j][0] = m_vVecState[2*indexOf(i, j)].y();
-			ctrlpoints[i][j][0] = m_vVecState[2*indexOf(i, j)].z();
+			ctrlpoints[i][j][1] = m_vVecState[2*indexOf(i, j)].y();
+			ctrlpoints[i][j][2] = m_vVecState[2*indexOf(i, j)].z();
+
 		}
 
 	// for (int i = 0; i < m_numParticles; i++) {
