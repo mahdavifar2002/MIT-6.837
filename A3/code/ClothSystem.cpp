@@ -94,50 +94,53 @@ vector<Vector3f> ClothSystem::evalF(vector<Vector3f> state)
 inline void glNormal3d(Vector3f vec) { glNormal3d(vec[0], vec[1], vec[2]); }
 inline void glVertex3d(Vector3f vec) { glVertex3d(vec[0], vec[1], vec[2]); }
 
-inline void drawTriangle(Vector3f a, Vector3f b, Vector3f c)
+inline void drawTriangle(Vector3f a, Vector3f b, Vector3f c, Vector3f n_a, Vector3f n_b, Vector3f n_c)
 {
-	Vector3f normal = Vector3f::cross(a-b, c-b);
+	// Vector3f normal = Vector3f::cross(a-b, c-b);
 
 	GLfloat color[4] = {0.9, 0.9, 0.9, 1.0};
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 
 	glBegin(GL_TRIANGLES);
-	glNormal3d(normal);
+	glNormal3d(n_a);
 	glVertex3d(a);
-	glNormal3d(normal);
+	glNormal3d(n_c);
 	glVertex3d(c);
-	glNormal3d(normal);
+	glNormal3d(n_b);
 	glVertex3d(b);
 	glEnd();
 
 	glBegin(GL_TRIANGLES);
-	glNormal3d(-normal);
+	glNormal3d(-n_a);
 	glVertex3d(a);
-	glNormal3d(-normal);
+	glNormal3d(-n_b);
 	glVertex3d(b);
-	glNormal3d(-normal);
+	glNormal3d(-n_c);
 	glVertex3d(c);
 	glEnd();
 }
 
 
-void ClothSystem::drawRect(int i, int j)
+void ClothSystem::drawRect(int i, int j, Vector3f *normals)
 {
 	Vector3f a = m_vVecState[2*indexOf(i, j)];
 	Vector3f b = m_vVecState[2*indexOf(i, j+1)];
 	Vector3f c = m_vVecState[2*indexOf(i+1, j+1)];
 	Vector3f d = m_vVecState[2*indexOf(i+1, j)];
 
-	drawTriangle(a, b, c);
-	drawTriangle(c, d, a);
-	drawTriangle(a, b, c);
-	drawTriangle(c, d, a);
+	Vector3f n_a = normals[numRows*(i) + j];
+	Vector3f n_b = normals[numRows*(i) + j+1];
+	Vector3f n_c = normals[numRows*(i+1) + j+1];
+	Vector3f n_d = normals[numRows*(i+1) + j];
+
+	drawTriangle(a, b, c, n_a, n_b, n_c);
+	drawTriangle(c, d, a, n_c, n_d, n_a);
 
 	// glBegin(GL_POLYGON);
-	// glVertex3f(a[0], a[1], a[2]);
-	// glVertex3f(b[0], b[1], b[2]);
-	// glVertex3f(c[0], c[1], c[2]);
-	// glVertex3f(d[0], d[1], d[2]);
+	// glVertex3d(a);
+	// glVertex3d(b);
+	// glVertex3d(c);
+	// glVertex3d(d);
 	// glEnd();
 }
 
@@ -180,16 +183,37 @@ void ClothSystem::draw()
 	// 	glPopMatrix();
 	// }
 	
+	Vector3f normals[numRows][numCols] = {};
+
+	for (int i = 0; i < numRows - 1; i++) {
+		for (int j = 0; j < numCols - 1; j++) {
+			Vector3f a = m_vVecState[2*indexOf(i, j)];
+			Vector3f b = m_vVecState[2*indexOf(i, j+1)];
+			Vector3f c = m_vVecState[2*indexOf(i+1, j+1)];
+			Vector3f d = m_vVecState[2*indexOf(i+1, j)];
+
+			
+			Vector3f normal = Vector3f::cross(a-b, c-b); // normal of (a, b, c)
+			normals[i][j] += normal;
+			normals[i][j+1] += normal;
+			normals[i+1][j+1] += normal;
+
+			normal = Vector3f::cross(c-d, a-d); // normal of (c, d, a)
+			normals[i+1][j+1] += normal;
+			normals[i+1][j] += normal;
+			normals[i][j] += normal;
+		}
+	}
+
 	for (int i = 0; i < numRows; i++) {
 		for (int j = 0; j < numCols; j++) {
-			// add structural springs
+			// draw structural springs
 			// if (i < numRows - 1)
 			// 	drawline(indexOf(i,j), indexOf(i+1, j));
 			// if (j < numCols - 1)
 			// 	drawline(indexOf(i,j), indexOf(i, j+1));
 			if (i < numRows - 1 && j < numCols - 1) {
-				// drawline(indexOf(i,j), indexOf(i+1, j+1));
-				drawRect(i, j);
+				drawRect(i, j, &normals[0][0]);
 			}
 		}
 	}

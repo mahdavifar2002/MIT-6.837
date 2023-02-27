@@ -18,7 +18,7 @@ public:
 
 	int indexOf(int i, int j);
 	vector<Vector3f> evalF(vector<Vector3f> state);
-	void drawRect(int i, int j);
+	void drawRect(int i, int j, Vector3f *normals);
 	void draw();
 
 private:
