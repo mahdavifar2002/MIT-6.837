@@ -173,6 +173,49 @@ public:
 		}
 	}
 
+	void apply_self_collision_forces(vector<Vector3f> state, vector<Vector3f> &f, float scale, float mass)
+	{
+		int scale_rev = 5;
+		float scale2 = scale;
+		vector<int> grid[scale_rev][scale_rev][scale_rev];
+
+		for (int i = 0; i < m_numParticles; i++)
+		{
+			Vector3f p_i = state[2*i];
+
+			int x_ind = int(abs(p_i.x() / scale2)) % scale_rev;
+			int y_ind = int(abs(p_i.y() / scale2)) % scale_rev;
+			int z_ind = int(abs(p_i.z() / scale2)) % scale_rev;
+
+			// printf("%d %d %d\n", x_ind, y_ind, z_ind);
+
+			vector<int>* cell = &(grid[x_ind][y_ind][z_ind]);
+			
+			for (unsigned int ind = 0; ind < cell->size(); ind++)
+			{
+				int j = (*cell)[ind];
+				Vector3f p_j = state[2*j];
+
+				if ((p_i - p_j).abs() < scale * 1.5)
+				{
+					printf("collision detected! %ld\n", cell->size());
+					
+					float structural_length = 1 * scale;
+					float structural_stiffness = 1000 * scale;
+
+					Spring spring = Spring(i, j, structural_length, structural_stiffness);
+					f[2*i + 1] += spring.getForce(p_i, p_j) / mass;
+					f[2*j + 1] += spring.getForce(p_j, p_i) / mass;
+				}
+
+
+				
+			}
+
+			cell->push_back(i);
+		}
+	}
+
 	void apply_wind_forces(vector<Vector3f> state, vector<Vector3f> &f, double wind, float mass)
 	{
 		if (!wind_exist)
