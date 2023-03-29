@@ -130,23 +130,21 @@ public:
 				Vector3f p_i = state[2*i];
 				Vector3f v_i = state[2*i + 1];
 
-				float k = 40;		// spring model for collision response
+				float k = 160;		// spring model for collision response
 				float c_paral = 40;	// damping factor
 				float c_perp = 5;	// friction effect
 
-				// TODO: make the steps continious
-				for (int step = 0; step < 4; step++)
-				if ((p_i - center).abs() < radius + pow(2,step) * 1e-2)
+				if ((p_i - center).abs() < radius + 0.1)
 				{
+					float dist = max(((p_i - center).abs() - radius) / 1e-2, 1.0);
 					Vector3f d = center - p_i;
 					Vector3f n = d / d.abs();
 					Vector3f v_paral = Vector3f::dot(v_i, n) * n;
 					Vector3f v_perp = v_i - v_paral;
-					Vector3f F = -k/(pow(2,step))*4*n
+					Vector3f F = -k/(dist)*n
 								 -c_paral*v_paral
 								 -c_perp*v_perp/v_perp.abs();
 					f[2*i + 1] += F;
-					break;
 				}
 
 				// // 1
