@@ -1,6 +1,6 @@
 # MIT-6.837
 
-## Programming Assignment 3: Physical Simulation of cloth
+## Programming Assignment 3: Physical Simulation of Cloth
 
 To compile and execute my solution code for this assignment, run the following line of code at terminal inside the `A3/code` floder:
 ```bash
