@@ -1,2 +1,2 @@
 # MIT-6.837
-Assignments of Computer Graphics @ MIT OCW
+My solution for assignments of Computer Graphics @ MIT OCW course.
